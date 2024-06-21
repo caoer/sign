@@ -1,0 +1,54 @@
+#!/bin/bash
+
+NAMESPACE="github.com/caoer/verify"
+
+red() {
+    echo -e "\033[0;31m$1\033[0m"
+}
+
+green() {
+    echo -e "\033[0;32m$1\033[0m"
+}
+
+# Function to validate the signature
+verify_signature() {
+    local message=$1
+    local username=$2
+    local signature=$3
+
+    echo "Validate for message: $message, github username: $username"
+
+    keys=$(curl -sL "https://github.com/$username.keys")
+    local is_valid=0
+
+    while read -r key; do
+        if echo "$message" | ssh-keygen -Y verify -I "$username" -f <(echo "$username $key") -n $NAMESPACE -s <(echo "$signature") >/dev/null 2>&1; then
+            green "Signature is valid for key: ${key}"
+            is_valid=1
+            break
+        else
+            red "Signature is invalid for key: ${key}"
+        fi
+    done <<<"$keys"
+
+    if [ "$is_valid" == 1 ]; then
+        green "Signature is valid for at least one key"
+    else
+        red "Signature is invalid for all keys"
+    fi
+
+}
+
+echo "Enter Message:"
+read MESSAGE
+echo "Enter Github UserName"
+read GITHUB_USERNAME
+
+echo "Enter Signature (multiline) (press Enter on a blank line to save):"
+SIGNATURE=""
+while IFS= read -r line; do
+  [[ -z "$line" ]] && break
+  SIGNATURE+="$line"$'\n'
+done
+
+verify_signature "${MESSAGE}" "${GITHUB_USERNAME}" "$SIGNATURE"

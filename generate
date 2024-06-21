@@ -1,0 +1,14 @@
+#!/bin/bash
+
+NAMESPACE="github.com/caoer/verify"
+
+# Function to generate a signature
+generate_signature() {
+    local message=$1
+    local ssh_key="${2:-${HOME}/.ssh/id_ed25519}"
+
+    echo "$message" | ssh-keygen -Y sign -f "$ssh_key" -n $NAMESPACE
+}
+
+generate_signature "$@"
+
