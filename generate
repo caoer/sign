@@ -2,10 +2,23 @@
 
 NAMESPACE="github.com/caoer/verify"
 
+green () {
+    echo -e "\033[0;32m$1\033[0m"
+}
+
 # Function to generate a signature
 generate_signature() {
     local message=$1
+    if [ -z "$message" ]; then
+        echo "Please enter a message to sign"
+        read -r message
+    fi
     local ssh_key="${2:-${HOME}/.ssh/id_ed25519}"
+
+    green "---------------------------------------"
+    green "Message:"
+    green "$message"
+    green "---------------------------------------"
 
     echo "$message" | ssh-keygen -Y sign -f "$ssh_key" -n $NAMESPACE
 }
